@@ -1,0 +1,77 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "letterforge"
+version = "0.1.0"
+description = "AI-powered typeface character sheet generator"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+keywords = ["ai", "typography", "typeface", "image-generation", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "click>=8.1",
+    "docker>=7.0",
+    "PyYAML>=6.0",
+    "Pillow>=10.0",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dalle  = ["openai>=1.30"]
+imagen = ["google-cloud-aiplatform>=1.50"]
+claude = ["anthropic>=0.28"]
+gpt4o  = ["openai>=1.30"]
+gemini = ["google-generativeai>=0.5"]
+ollama = ["ollama>=0.2"]
+all = [
+    "openai>=1.30",
+    "google-cloud-aiplatform>=1.50",
+    "anthropic>=0.28",
+    "google-generativeai>=0.5",
+    "ollama>=0.2",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "pytest-mock>=3.14",
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "types-PyYAML",
+    "responses>=0.25",
+]
+
+[project.scripts]
+letterforge = "letterforge.cli.main:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/letterforge"]
+
+[tool.ruff]
+src = ["src"]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["letterforge"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=letterforge --cov-report=term-missing -q"
