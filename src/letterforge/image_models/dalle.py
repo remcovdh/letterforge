@@ -38,7 +38,13 @@ class DalleAdapter(ImageModelAdapter):
             n=1,
         )
         item = response.data[0]
-        image_bytes = base64.b64decode(item.b64_json or "")
+        if item.b64_json:
+            image_bytes = base64.b64decode(item.b64_json)
+        elif item.url:
+            import httpx
+            image_bytes = httpx.get(item.url).content
+        else:
+            raise RuntimeError("No image data in API response")
         return ImageGenerationResponse(
             image_bytes=image_bytes,
             model_used=self._config.model,

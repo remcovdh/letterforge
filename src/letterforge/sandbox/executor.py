@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import os
 import tarfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -36,7 +37,11 @@ class DockerSandbox:
                 f"Docker daemon not reachable. Is Docker running? ({exc})"
             ) from exc
         self._config = config
-        self._sandbox_dir = Path(__file__).parent.parent.parent.parent / "docker" / "sandbox"
+        env_dir = os.environ.get("LETTERFORGE_SANDBOX_DIR")
+        if env_dir:
+            self._sandbox_dir = Path(env_dir)
+        else:
+            self._sandbox_dir = Path(__file__).parent.parent.parent.parent / "docker" / "sandbox"
 
     def ensure_image(self) -> None:
         import docker
@@ -84,7 +89,6 @@ class DockerSandbox:
                 "/workspace/inputs",
                 {"sheet1.png": sheet1_bytes, "sheet2.png": sheet2_bytes},
             )
-            container.exec_run("mkdir -p /workspace/outputs")
             container.start()
 
             timed_out = False

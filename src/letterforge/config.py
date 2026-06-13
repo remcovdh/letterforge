@@ -14,9 +14,9 @@ class ConfigurationError(Exception):
 
 class DalleConfig(BaseModel):
     api_key: SecretStr | None = None
-    model: str = "dall-e-3"
-    size: str = "1792x1024"
-    quality: Literal["standard", "hd"] = "hd"
+    model: str = "gpt-image-2"
+    size: str = "1536x1024"
+    quality: Literal["low", "medium", "high", "auto"] = "high"
 
 
 class ImagenConfig(BaseModel):
