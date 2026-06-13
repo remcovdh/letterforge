@@ -34,7 +34,6 @@ class DalleAdapter(ImageModelAdapter):
             prompt=prompt,
             size=self._config.size,  # type: ignore[arg-type]
             quality=self._config.quality,
-            response_format="b64_json",
             n=1,
         )
         item = response.data[0]
