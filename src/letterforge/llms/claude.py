@@ -16,7 +16,7 @@ class ClaudeAdapter(LLMAdapter):
                 "anthropic package not installed. Run: pip install letterforge[claude]"
             )
         api_key = config.api_key.get_secret_value() if config.api_key else None
-        self._client = anthropic.Anthropic(api_key=api_key)
+        self._client = anthropic.Anthropic(**({} if api_key is None else {"api_key": api_key}))
         self._config = config
 
     def generate_code(self, request: CodeGenRequest) -> CodeGenResponse:

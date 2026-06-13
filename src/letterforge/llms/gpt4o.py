@@ -16,7 +16,7 @@ class GPT4oAdapter(LLMAdapter):
                 "openai package not installed. Run: pip install letterforge[gpt4o]"
             )
         api_key = config.api_key.get_secret_value() if config.api_key else None
-        self._client = OpenAI(api_key=api_key)
+        self._client = OpenAI(**({} if api_key is None else {"api_key": api_key}))
         self._config = config
 
     def generate_code(self, request: CodeGenRequest) -> CodeGenResponse:
