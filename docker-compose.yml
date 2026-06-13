@@ -1,6 +1,9 @@
 services:
   letterforge:
     build: .
+    env_file:
+      - path: .env
+        required: false
     volumes:
       # Share the host Docker daemon so the app can spawn sandbox containers
       - /var/run/docker.sock:/var/run/docker.sock
@@ -8,8 +11,5 @@ services:
       - ${WORK_DIR:-.}:/work
     working_dir: /work
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
       - LETTERFORGE_OUTPUT_DIR=/work/letterforge_output
       - LETTERFORGE_SANDBOX__AUTO_BUILD=true
