@@ -2,8 +2,7 @@ services:
   letterforge:
     build: .
     env_file:
-      - path: .env
-        required: false
+      - .env
     volumes:
       # Share the host Docker daemon so the app can spawn sandbox containers
       - /var/run/docker.sock:/var/run/docker.sock
