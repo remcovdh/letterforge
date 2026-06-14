@@ -86,6 +86,8 @@ class Pipeline:
         result_zip, extraction_results = assemble_zip(
             output_files=sandbox_result.output_files,
             output_zip=output_zip,
+            sheets=sheets,
+            generated_code=code,
         )
 
         return PipelineResult(

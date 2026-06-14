@@ -22,7 +22,34 @@ reference image + style prompt
   output.zip
 ```
 
-## Quick start
+## Quick start — Docker (recommended)
+
+No local Python environment needed. Requires Docker with the Compose plugin.
+
+```bash
+git clone https://github.com/remcovdh/letterforge.git
+cd letterforge
+
+# fill in your API keys (OPENAI_API_KEY and ANTHROPIC_API_KEY are required for the defaults)
+cp .env.example .env
+$EDITOR .env
+
+# build the app image (one-time, ~30 s)
+docker compose build
+
+# generate a typeface — set WORK_DIR to the folder containing your moodboard
+WORK_DIR=/path/to/your/images docker compose run --rm letterforge \
+  generate moodboard.jpg "art nouveau with organic curved serifs"
+```
+
+Output lands in `$WORK_DIR/letterforge_output/`. The sandbox image
+(`letterforge-sandbox:latest`) is built automatically on the first run.
+
+> **Note:** the default pipeline uses `gpt-image-2` (OpenAI) for image
+> generation and Claude for the LLM, so both `OPENAI_API_KEY` and
+> `ANTHROPIC_API_KEY` must be set in `.env`.
+
+## Quick start — local install
 
 ```bash
 pip install letterforge[all]
@@ -45,7 +72,7 @@ letterforge generate moodboard.jpg "art nouveau with organic curved serifs"
 Install only what you need:
 
 ```bash
-pip install letterforge[dalle]    # DALL-E 3 image model
+pip install letterforge[dalle]    # gpt-image-2 image model
 pip install letterforge[imagen]   # Google Imagen image model
 pip install letterforge[claude]   # Claude LLM
 pip install letterforge[gpt4o]    # GPT-4o LLM
@@ -115,16 +142,29 @@ letterforge build-sandbox    Build the Docker sandbox image
 
 ## Output format
 
-Each character is saved as `{category}_{slug}.png` with a transparent background:
+The ZIP is organised into folders:
 
-| Example filename      | Character |
-|-----------------------|-----------|
-| `upper_A.png`         | A         |
-| `lower_a.png`         | a         |
-| `digit_0.png`         | 0         |
-| `punct_exclamation.png` | !       |
+```
+characters/          ← 68 transparent PNGs, one per glyph
+  upper_A.png
+  lower_a.png
+  digit_0.png
+  punct_exclamation.png
+  ...
+sheets/              ← the generated character-sheet images
+  sheet1.png         (A–Z, 0–9, punctuation)
+  sheet2.png         (a–z)
+intermediate/
+  extraction_code.py ← the LLM-generated extraction script
+manifest.txt         ← counts of found / missing / unexpected files
+```
 
-The ZIP also contains a `manifest.txt` listing any missing or unexpected files.
+| Example filename                   | Character |
+|------------------------------------|-----------|
+| `characters/upper_A.png`           | A         |
+| `characters/lower_a.png`           | a         |
+| `characters/digit_0.png`           | 0         |
+| `characters/punct_exclamation.png` | !         |
 
 ## Backlog
 
