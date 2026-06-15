@@ -27,22 +27,17 @@ class ClaudeAdapter(LLMAdapter):
                 "source": {"type": "base64", "media_type": media_type, "data": data},
             }
 
+        content: list[dict] = []
+        for i, path in enumerate(request.sheet_image_paths, 1):
+            content.append({"type": "text", "text": f"SHEET {i}:"})
+            content.append(img_block(path))
+        content.append({"type": "text", "text": request.user_prompt})
+
         message = self._client.messages.create(
             model=self._config.model,
             max_tokens=self._config.max_tokens,
             system=request.system_prompt,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": "SHEET 1:"},
-                        img_block(request.sheet1_image_path),
-                        {"type": "text", "text": "SHEET 2:"},
-                        img_block(request.sheet2_image_path),
-                        {"type": "text", "text": request.user_prompt},
-                    ],
-                }
-            ],
+            messages=[{"role": "user", "content": content}],
         )
         raw = message.content[0].text
         return CodeGenResponse(

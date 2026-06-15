@@ -11,6 +11,7 @@ from letterforge.llms.base import CodeGenRequest
 from letterforge.models import (
     SHEET1_SPEC,
     SHEET2_SPEC,
+    SHEET3_SPEC,
     GeneratedSheet,
     PipelineResult,
     SheetSpec,
@@ -21,7 +22,6 @@ from letterforge.prompts import (
     SHEET_GENERATION_SYSTEM,
     build_code_gen_prompt,
     build_sheet_prompt,
-    extract_code_block,
 )
 from letterforge.sandbox.executor import DockerSandbox, SandboxTimeoutError
 from letterforge.sandbox.validator import validate_generated_code
@@ -29,6 +29,7 @@ from letterforge.sandbox.validator import validate_generated_code
 log = logging.getLogger(__name__)
 
 _MAX_CODE_GEN_RETRIES = 3
+_ALL_SPECS = [SHEET1_SPEC, SHEET2_SPEC, SHEET3_SPEC]
 
 
 class Pipeline:
@@ -64,8 +65,7 @@ class Pipeline:
         log.info("Step 3: running extraction code in Docker sandbox")
         sandbox_result = self.sandbox.run(
             code=code,
-            sheet1_bytes=sheets[0].raw_bytes,
-            sheet2_bytes=sheets[1].raw_bytes,
+            sheet_bytes=[s.raw_bytes for s in sheets],
         )
 
         if sandbox_result.timed_out:
@@ -105,13 +105,12 @@ class Pipeline:
         style_prompt: str,
         work_dir: Path,
     ) -> list[GeneratedSheet]:
-        # For DALL-E, which cannot accept image inputs, describe the reference via the LLM first.
         reference_description = ""
         if self.config.image_model == "dalle":
             reference_description = self._describe_reference_image(reference_image)
 
         sheets: list[GeneratedSheet] = []
-        for spec in (SHEET1_SPEC, SHEET2_SPEC):
+        for spec in _ALL_SPECS:
             prompt = build_sheet_prompt(spec, style_prompt)
             req = ImageGenerationRequest(
                 prompt=prompt,
@@ -131,12 +130,8 @@ class Pipeline:
         return sheets
 
     def _describe_reference_image(self, reference_image: Path) -> str:
-        """Ask the configured LLM to describe the visual style of the reference image."""
-        from letterforge.llms.base import CodeGenRequest
-
         req = CodeGenRequest(
-            sheet1_image_path=reference_image,
-            sheet2_image_path=reference_image,
+            sheet_image_paths=[reference_image],
             system_prompt=(
                 "You are an expert art director. "
                 "Describe the visual style of the provided image in 2-3 sentences, "
@@ -149,7 +144,7 @@ class Pipeline:
         return resp.raw_response.strip()
 
     def _generate_extraction_code_with_retry(self, sheets: list[GeneratedSheet]) -> str:
-        user_prompt = build_code_gen_prompt(SHEET1_SPEC, SHEET2_SPEC)
+        user_prompt = build_code_gen_prompt([s.spec for s in sheets])
         violations_feedback = ""
 
         for attempt in range(1, _MAX_CODE_GEN_RETRIES + 1):
@@ -163,8 +158,7 @@ class Pipeline:
                 )
 
             req = CodeGenRequest(
-                sheet1_image_path=sheets[0].image_path,
-                sheet2_image_path=sheets[1].image_path,
+                sheet_image_paths=[s.image_path for s in sheets],
                 system_prompt=CODE_GEN_SYSTEM,
                 user_prompt=prompt,
             )

@@ -63,19 +63,20 @@ class DockerSandbox:
     def run(
         self,
         code: str,
-        sheet1_bytes: bytes,
-        sheet2_bytes: bytes,
+        sheet_bytes: list[bytes],
     ) -> SandboxResult:
         self.ensure_image()
+
+        sheet_env = {
+            f"SHEET{i + 1}_PATH": f"/workspace/inputs/sheet{i + 1}.png"
+            for i in range(len(sheet_bytes))
+        }
+        environment = {**sheet_env, "OUTPUT_DIR": "/workspace/outputs"}
 
         container = self._docker.containers.create(
             image=self._config.docker_image,
             command=["python", "/workspace/generated_code.py"],
-            environment={
-                "SHEET1_PATH": "/workspace/inputs/sheet1.png",
-                "SHEET2_PATH": "/workspace/inputs/sheet2.png",
-                "OUTPUT_DIR": "/workspace/outputs",
-            },
+            environment=environment,
             mem_limit=self._config.mem_limit,
             cpu_quota=self._config.cpu_quota,
             network_disabled=self._config.network_disabled,
@@ -87,7 +88,7 @@ class DockerSandbox:
             self._put_files(
                 container,
                 "/workspace/inputs",
-                {"sheet1.png": sheet1_bytes, "sheet2.png": sheet2_bytes},
+                {f"sheet{i + 1}.png": data for i, data in enumerate(sheet_bytes)},
             )
             container.start()
 

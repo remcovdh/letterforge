@@ -50,26 +50,32 @@ def _punct(c: str) -> Character:
     return Character(category=CharCategory.PUNCT, char=c, slug=_PUNCT_MAP[c])
 
 
-SHEET1_CHARS: list[Character] = [
-    *[_upper(c) for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"],
+# Sheet 1: uppercase only — 26 chars, 9 cols × 3 rows = 27 cells (1 empty)
+UPPER_CHARS: list[Character] = [_upper(c) for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"]
+
+# Sheet 2: lowercase only — 26 chars, 9 cols × 3 rows = 27 cells (1 empty)
+# Gets extra vertical padding for ascenders/descenders
+LOWER_CHARS: list[Character] = [_lower(c) for c in "abcdefghijklmnopqrstuvwxyz"]
+
+# Sheet 3: digits + punctuation — 16 chars, 5 cols × 4 rows = 20 cells (4 empty)
+# Wider cells give more room for naturally narrow (!) vs wide (0) glyphs
+MISC_CHARS: list[Character] = [
     *[_digit(c) for c in "0123456789"],
     *[_punct(c) for c in "!?.,;:"],
 ]
 
-SHEET2_CHARS: list[Character] = [
-    *[_lower(c) for c in "abcdefghijklmnopqrstuvwxyz"],
-]
-
-ALL_CHARS: list[Character] = SHEET1_CHARS + SHEET2_CHARS
-
-GRID_COLS = 9
+ALL_CHARS: list[Character] = UPPER_CHARS + LOWER_CHARS + MISC_CHARS
 
 
 class SheetSpec(BaseModel):
     sheet_index: int
     characters: list[Character]
-    grid_cols: int = GRID_COLS
+    grid_cols: int
     grid_rows: int = 0
+    # Bright magenta gutter: unambiguously detectable, distinct from white/black background
+    gutter_color: str = "#FF00FF"
+    # Extra vertical padding for sheets with ascenders/descenders (lowercase)
+    extra_cell_padding: bool = False
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -107,5 +113,6 @@ class PipelineResult(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
 
-SHEET1_SPEC = SheetSpec(sheet_index=1, characters=SHEET1_CHARS)
-SHEET2_SPEC = SheetSpec(sheet_index=2, characters=SHEET2_CHARS)
+SHEET1_SPEC = SheetSpec(sheet_index=1, characters=UPPER_CHARS, grid_cols=9)
+SHEET2_SPEC = SheetSpec(sheet_index=2, characters=LOWER_CHARS, grid_cols=9, extra_cell_padding=True)
+SHEET3_SPEC = SheetSpec(sheet_index=3, characters=MISC_CHARS, grid_cols=5)

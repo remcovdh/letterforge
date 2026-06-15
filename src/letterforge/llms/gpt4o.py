@@ -34,12 +34,13 @@ class GPT4oAdapter(LLMAdapter):
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": "SHEET 1:"},
-                        img_url(request.sheet1_image_path),
-                        {"type": "text", "text": "SHEET 2:"},
-                        img_url(request.sheet2_image_path),
-                        {"type": "text", "text": request.user_prompt},
-                    ],
+                        item
+                        for i, path in enumerate(request.sheet_image_paths, 1)
+                        for item in (
+                            {"type": "text", "text": f"SHEET {i}:"},
+                            img_url(path),
+                        )
+                    ] + [{"type": "text", "text": request.user_prompt}],
                 },
             ],
         )

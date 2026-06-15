@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
 @dataclass
 class CodeGenRequest:
-    sheet1_image_path: Path
-    sheet2_image_path: Path
+    sheet_image_paths: list[Path]
     system_prompt: str
     user_prompt: str
 
