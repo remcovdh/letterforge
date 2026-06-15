@@ -23,6 +23,12 @@ Rules:
 - Each output PNG must be RGBA with the cell background fully transparent.
 - Each output PNG must be tightly cropped to the visible glyph with 4 px transparent padding —
   no cell background area included, and the glyph width/height reflects its natural proportions.
+
+Self-check your code before finishing:
+- Verify that every variable is defined before use (no NameError at runtime).
+- Verify that array indexing uses the correct axis order: arr[row, col] or arr[y, x].
+- Verify that every opened image path comes from os.environ, not a hardcoded string.
+- Verify that the output loop saves exactly the right filename for each (row, col) cell.
 """
 
 

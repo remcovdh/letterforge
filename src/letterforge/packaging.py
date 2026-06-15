@@ -4,6 +4,7 @@ import zipfile
 from pathlib import Path
 
 from letterforge.models import ALL_CHARS, ExtractionResult, GeneratedSheet
+from letterforge.post_processing import clean_character_png
 
 
 def assemble_zip(
@@ -21,7 +22,7 @@ def assemble_zip(
 
     with zipfile.ZipFile(output_zip, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for filename, data in output_files.items():
-            zf.writestr(f"characters/{filename}", data)
+            zf.writestr(f"characters/{filename}", clean_character_png(data))
             char = expected.get(filename)
             if char:
                 results.append(
