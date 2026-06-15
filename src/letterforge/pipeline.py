@@ -151,9 +151,9 @@ class Pipeline:
             prompt = user_prompt
             if violations_feedback:
                 prompt = (
-                    f"Your previous code had safety violations that must be fixed:\n"
+                    f"Your previous code had errors that must be fixed:\n"
                     f"{violations_feedback}\n\n"
-                    f"Generate corrected code that avoids these issues.\n\n"
+                    f"Generate a corrected, complete Python script that fixes every issue above.\n\n"
                     f"{user_prompt}"
                 )
 

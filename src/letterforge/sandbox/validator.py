@@ -12,9 +12,12 @@ _BLOCKED_BUILTINS = {"exec", "eval", "compile", "__import__", "breakpoint"}
 def validate_generated_code(code: str) -> list[str]:
     """
     Returns a list of violation strings. Empty list means the code is safe to run.
-    Raises SyntaxError if the code cannot be parsed.
+    Syntax errors are returned as violations so the retry loop can request a fix.
     """
-    tree = ast.parse(code)
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return [f"SyntaxError at line {e.lineno}: {e.msg} — fix this and regenerate the full script"]
     violations: list[str] = []
 
     for node in ast.walk(tree):
