@@ -87,27 +87,40 @@ Implementation guidance:
 1. Load the sheet in grayscale (keep a colour copy for cropping).
 2. Detect background: sample a 10 px border around all four edges; \
    if the median sample value > 128 the background is white, otherwise black.
-3. Build a binary foreground mask:
-   - White background: foreground where pixel value < 200
-   - Black background: foreground where pixel value > 55
-4. Find COLUMN boundaries via vertical projection histogram:
-   a. col_hist[x] = count of foreground pixels in column x
-   b. Gutter columns: col_hist[x] <= 2 (solid background strip, allowing 2 px noise)
-   c. Merge consecutive gutter columns into contiguous gutter spans
-   d. Cell column spans = gaps between gutter spans (including image left/right edges)
-   e. If the number of column spans found != expected column count, \
-      fall back to dividing the full image width into equal spans
-5. Find ROW boundaries the same way using a horizontal projection histogram.
-6. For each cell (row_idx, col_idx):
-   a. Crop the colour image to the cell's column span × row span
-   b. Convert the crop to RGBA
-   c. Flood-fill background to transparent from all 4 corners \
-      (use PIL ImageDraw.floodfill with a 30-value tolerance, or cv2.floodFill)
-   d. Additionally threshold any remaining near-background pixels to transparent \
-      (white bg: luminance > 230 → alpha=0; black bg: luminance < 25 → alpha=0)
-   e. Trim fully-transparent border rows/columns, then add 4 px transparent padding
-   f. Save to OUTPUT_DIR with the exact filename from the character map
-7. Process sheet 1 first, then sheet 2. Write the complete Python script now.
+3. Build a binary foreground mask (numpy bool array, True = ink pixel):
+   - White background: True where grayscale value < 200
+   - Black background: True where grayscale value > 55
+4. Clip to content bounding box: find the first and last row, and first and last \
+   column, that contain at least one True pixel. All subsequent steps work \
+   within this bounding box only. This excludes outer margins so they are \
+   never mistaken for cell gutters.
+5. Find COLUMN boundaries via vertical projection histogram (within bounding box):
+   a. col_hist[x] = count of True pixels in bounding-box column x
+   b. Gutter columns: col_hist[x] <= 2 (pure background, allowing 2 px JPEG noise)
+   c. Identify runs of consecutive gutter columns → these are the gutter spans
+   d. Cell column spans = the runs of non-gutter columns between those gutter spans \
+      (the bounding box left and right edges are boundaries, NOT gutter spans)
+   e. Verify exactly {spec1.grid_cols} column spans were found; \
+      if not, divide the bounding box width into {spec1.grid_cols} equal spans instead
+6. Find ROW boundaries the same way using a horizontal projection histogram, \
+   expecting exactly {{row_count}} row spans per sheet.
+7. For each cell (row_idx, col_idx) — row_idx and col_idx are 0-based:
+   a. Map to the character at position (row_idx * grid_cols + col_idx) in the \
+      character map; skip if the position is beyond the character count
+   b. Crop the COLOUR image (not the grayscale) to the cell's column span × row span \
+      within the bounding box
+   c. Convert the crop to RGBA
+   d. Flood-fill background to alpha=0 from all 4 corners using PIL ImageDraw.floodfill \
+      with tolerance 30 on the RGB values; repeat on the grayscale-converted version \
+      if flood-fill misses enclosed background areas
+   e. Additionally set any pixel to alpha=0 where: \
+      white bg → R>230 and G>230 and B>230; black bg → R<25 and G<25 and B<25
+   f. Trim fully-transparent border rows/cols (where entire row/col alpha == 0), \
+      then pad with 4 px of fully transparent pixels on all sides
+   g. Save as PNG to OUTPUT_DIR with the exact filename from the character map
+8. Process SHEET 1 first (using SHEET 1's grid_cols and row count), \
+   then SHEET 2 (using SHEET 2's grid_cols and row count). \
+   Write the complete, self-contained Python script now.
 """
 
 
