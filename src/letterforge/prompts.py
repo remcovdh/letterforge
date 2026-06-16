@@ -149,9 +149,13 @@ Step 2 — CELL EXTRACTION (per cell):
 
 Step 3 — BACKGROUND REMOVAL (per cell crop):
   Convert the crop to RGBA.
-  Detect background colour from the crop's four corners (average R,G,B of the 4 corner pixels).
-  White background (avg > 128): set alpha=0 for all pixels where R>215 AND G>215 AND B>215.
-  Black background (avg <= 128): set alpha=0 for all pixels where R<40 AND G<40 AND B<40.
+  Detect background colour using MAJORITY PIXEL COUNTING across the WHOLE crop
+  (not just corners — corners may be occupied by a glyph that touches the edge):
+    near_white = count pixels where R>180 AND G>180 AND B>180 AND NOT magenta
+    near_black = count pixels where R<75  AND G<75  AND B<75  AND NOT magenta
+    If near_white >= near_black → white background; else → black background.
+  White background: set alpha=0 for all pixels where R>215 AND G>215 AND B>215.
+  Black background: set alpha=0 for all pixels where R<40 AND G<40 AND B<40.
   Then flood-fill from each of the 4 corners of the crop using PIL ImageDraw.floodfill
   with thresh=30, replacing the background colour with a sentinel transparent colour.
   Convert any sentinel pixels to alpha=0.
